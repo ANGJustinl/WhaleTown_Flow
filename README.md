@@ -23,3 +23,4 @@
 ## 现有工作流
 - `rmbg/`：BRIA RMBG 1.4 前景抠图（浏览器内 ONNX + WASM）。
 - `slicer/`：多图切割工具（网格/边距/间距可调，单个或批量 ZIP 下载）。
+- `image2bitmap/`：图片矢量化（基于 ImageTracer.js 将位图转换为 SVG）。

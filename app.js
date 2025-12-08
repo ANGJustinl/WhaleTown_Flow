@@ -10,6 +10,12 @@ const flows = [
     name: '多图切割',
     description: '网格调整 + 边距 + 间距，单张/批量导出',
     url: './slicer/' // 新的切割工具
+  },
+  {
+    id: 'image2bitmap',
+    name: '图片矢量化',
+    description: 'ImageTracer.js 将位图转换为 SVG',
+    url: './image2bitmap/' // 矢量化工具
   }
   // 可在此继续添加更多工作流，保持 id 唯一且 url 指向对应入口
 ]

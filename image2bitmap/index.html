@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>图片矢量化 · ImageTracer.js</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://unpkg.com/imagetracerjs@1.2.6/imagetracer_v1.2.6.js"></script>
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div class="title">
+          <span class="emoji">🎨</span>
+          <div>
+            <h1>图片矢量化</h1>
+            <p>基于 ImageTracer.js，将位图转换为 SVG</p>
+          </div>
+        </div>
+        <div class="uploader" id="drop-zone">
+          <label class="upload-btn">
+            <input id="file-input" type="file" accept="image/*" />
+            <span>选择图片</span>
+          </label>
+          <p class="hint">或将图片拖拽到此处</p>
+          <p class="status" id="status">未选择文件</p>
+        </div>
+      </header>
+
+      <section class="cards">
+        <div class="card options-card">
+          <div class="card-header">
+            <strong>原图预览</strong>
+          </div>
+          <div class="card-body preview-body">
+            <img id="preview" alt="待矢量化的图片预览" hidden />
+            <p id="preview-placeholder" class="placeholder">上传后显示原图</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <strong>矢量化结果 (SVG)</strong>
+            <button id="download-btn" class="secondary" disabled>下载 SVG</button>
+          </div>
+          <div class="card-body preview-body svg-body">
+            <div id="svg-output" class="svg-output"></div>
+            <p id="svg-placeholder" class="placeholder">矢量化完成后会展示 SVG</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
