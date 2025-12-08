@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BRIA RMBG Online</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">BRIA RMBG</p>
+          <h1>前端抠图 · 本地运行</h1>
+          <p class="subtitle">
+            使用 BRIA RMBG 1.4（ONNX + WebAssembly），不上传图片，直接在浏览器处理。
+          </p>
+          <div class="controls">
+            <label class="file-input">
+              <input id="file" type="file" accept="image/*" />
+              <span>选择图片</span>
+            </label>
+            <button id="run" type="button" class="primary">开始去除背景</button>
+          </div>
+          <p id="status" class="status">请选择图片</p>
+          <p id="progress" class="progress"></p>
+        </div>
+      </header>
+
+      <section class="preview-grid">
+        <div class="card">
+          <div class="card-header">
+            <strong>原图</strong>
+          </div>
+          <div class="card-body">
+            <img id="preview-input" alt="原图预览" />
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <strong>去背结果</strong>
+            <a
+              id="download-link"
+              class="link hidden"
+              href="#"
+              download="rmbg.png"
+              >下载</a
+            >
+          </div>
+          <div class="card-body">
+            <img id="preview-output" alt="去背预览" />
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>
+        modified from
+        <a href="https://github.com/zhbhun/rmbg" target="_blank" rel="noreferrer"
+          >zhbhun/rmbg</a
+        >
+        · ANGForever © 2025
+      </span>
+    </footer>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
