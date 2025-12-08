@@ -106,4 +106,29 @@ h1 {
   color: #7a5a45;
   text-align: center;
   font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #7a5a45;
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.github-link:hover {
+  color: #3c2a20;
+  background: #f0d2aa;
+}
+
+.github-link svg {
+  flex-shrink: 0;
 }
