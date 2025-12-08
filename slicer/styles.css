@@ -81,14 +81,14 @@ h1 {
 
 .hint {
   margin: 8px 0 4px;
-  color: #000;
+  color: #000000;
   font-weight: 700;
   font-size: 15px;
 }
 
 .status {
   margin: 0;
-  color: #000;
+  color: #000000;
   font-size: 15px;
   font-weight: 700;
 }
