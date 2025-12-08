@@ -16,6 +16,12 @@ const flows = [
     name: '图片矢量化',
     description: 'ImageTracer.js 将位图转换为 SVG',
     url: './image2bitmap/' // 矢量化工具
+  },
+  {
+    id: 'convert',
+    name: '格式转换',
+    description: 'PNG/JPG/WebP/ICO 格式互转',
+    url: './convert/' // 格式转换工具
   }
   // 可在此继续添加更多工作流，保持 id 唯一且 url 指向对应入口
 ]

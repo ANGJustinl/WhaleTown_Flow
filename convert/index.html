@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>图片格式转换</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div class="title">
+          <span class="emoji">🔄</span>
+          <div>
+            <h1>图片格式转换</h1>
+            <p>支持 PNG、JPG、WebP、SVG、ICO 等格式互转</p>
+          </div>
+        </div>
+        <div class="uploader" id="drop-zone">
+          <label class="upload-btn">
+            <input id="file-input" type="file" accept="image/*" />
+            <span>选择图片</span>
+          </label>
+          <p class="hint">或将图片拖拽到此处</p>
+          <p class="status" id="status">未选择文件</p>
+        </div>
+      </header>
+
+      <section class="cards">
+        <div class="card options-card">
+          <div class="card-header">
+            <strong>原图预览</strong>
+            <span id="file-info" class="file-info"></span>
+          </div>
+          <div class="card-body preview-body">
+            <img id="preview" alt="原图预览" hidden />
+            <p id="preview-placeholder" class="placeholder">上传后显示原图</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <strong>转换选项</strong>
+          </div>
+          <div class="card-body">
+            <div class="format-options">
+              <label class="format-label">
+                <input type="radio" name="format" value="png" checked />
+                <span class="format-btn">PNG</span>
+              </label>
+              <label class="format-label">
+                <input type="radio" name="format" value="jpeg" />
+                <span class="format-btn">JPEG</span>
+              </label>
+              <label class="format-label">
+                <input type="radio" name="format" value="webp" />
+                <span class="format-btn">WebP</span>
+              </label>
+              <label class="format-label">
+                <input type="radio" name="format" value="ico" />
+                <span class="format-btn">ICO</span>
+              </label>
+            </div>
+
+            <div class="quality-control" id="quality-control">
+              <label for="quality-slider">
+                <strong>质量：</strong>
+                <span id="quality-value">90</span>%
+              </label>
+              <input 
+                type="range" 
+                id="quality-slider" 
+                min="1" 
+                max="100" 
+                value="90" 
+                class="slider"
+              />
+            </div>
+
+            <div class="ico-sizes" id="ico-sizes" hidden>
+              <strong>ICO 尺寸：</strong>
+              <div class="size-options">
+                <label><input type="checkbox" value="16" checked /> 16×16</label>
+                <label><input type="checkbox" value="32" checked /> 32×32</label>
+                <label><input type="checkbox" value="48" checked /> 48×48</label>
+                <label><input type="checkbox" value="64" /> 64×64</label>
+              </div>
+            </div>
+
+            <button id="convert-btn" class="primary" disabled>开始转换</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <strong>转换结果</strong>
+            <button id="download-btn" class="secondary" disabled>下载文件</button>
+          </div>
+          <div class="card-body preview-body">
+            <img id="result-preview" alt="转换结果预览" hidden />
+            <div id="ico-results" class="ico-results" hidden></div>
+            <p id="result-placeholder" class="placeholder">转换完成后显示结果</p>
+          </div>
+          <div class="card-footer" id="result-info" hidden>
+            <span id="result-size"></span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

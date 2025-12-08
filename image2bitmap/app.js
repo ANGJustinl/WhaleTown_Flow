@@ -35,6 +35,22 @@ const handleSVGResult = (svgString) => {
   elements.svgOutput.innerHTML = svgString
   elements.svgPlaceholder.hidden = true
 
+  // Remove inline width/height from SVG to allow CSS scaling
+  const svgElement = elements.svgOutput.querySelector('svg')
+  if (svgElement) {
+    // Store original dimensions in viewBox if not present
+    const width = svgElement.getAttribute('width')
+    const height = svgElement.getAttribute('height')
+    
+    if (width && height && !svgElement.getAttribute('viewBox')) {
+      svgElement.setAttribute('viewBox', `0 0 ${width} ${height}`)
+    }
+    
+    // Remove fixed dimensions to allow responsive scaling
+    svgElement.removeAttribute('width')
+    svgElement.removeAttribute('height')
+  }
+
   // Prepare downloadable blob
   const blob = new Blob([svgString], { type: 'image/svg+xml' })
   lastSVGBlobUrl = URL.createObjectURL(blob)
