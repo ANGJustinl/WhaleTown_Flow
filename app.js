@@ -28,6 +28,12 @@ const flows = [
     name: 'GIF 制作',
     description: '多图合成 GIF 动画，支持拖拽排序',
     url: './gif/' // GIF 制作工具
+  },
+  {
+    id: 'whaledesign',
+    name: 'Whale 设计器',
+    description: 'Datawhale Town 角色创建器 · AI 像素风格',
+    url: './whaledesign/dist/' // Whale 设计工具
   }
   // 可在此继续添加更多工作流，保持 id 唯一且 url 指向对应入口
 ]
