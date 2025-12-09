@@ -26,6 +26,13 @@ body {
   box-shadow: 0 14px 35px rgba(97, 63, 36, 0.25);
 }
 
+.hero-content {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
 .eyebrow {
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -113,24 +120,40 @@ h1 {
   flex-wrap: wrap;
 }
 
-.github-link {
+.github-link-hero {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  color: #7a5a45;
+  gap: 8px;
+  color: #fff7e6;
   text-decoration: none;
-  padding: 6px 12px;
-  border-radius: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 2px solid rgba(255, 247, 230, 0.3);
   transition: all 0.15s ease;
+  font-weight: 600;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.github-link:hover {
-  color: #3c2a20;
-  background: #f0d2aa;
+.github-link-hero:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 247, 230, 0.5);
+  transform: translateY(-2px);
 }
 
-.github-link svg {
+.github-link-hero svg {
   flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .hero-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .github-link-hero {
+    justify-content: center;
+  }
 }
 
 .clipboard-panel {
