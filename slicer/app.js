@@ -18,6 +18,7 @@ const elements = {
   gapY: document.querySelector('#gap-y'),
   format: document.querySelector('#format'),
   sliceBtn: document.querySelector('#slice-btn'),
+  resetGrid: document.querySelector('#reset-grid'),
   sliceInfo: document.querySelector('#slice-info'),
   results: document.querySelector('#results'),
   resultGrid: document.querySelector('#result-grid'),
@@ -39,7 +40,11 @@ const state = {
   imageURL: null,
   slices: [],
   gifBlob: null,
-  gifURL: null
+  gifURL: null,
+  dragging: null, // { type: 'margin-top' | 'margin-left' | 'vline' | 'hline', index: number }
+  dragStart: null,
+  customVLines: [], // Custom vertical line positions (x coordinates)
+  customHLines: []  // Custom horizontal line positions (y coordinates)
 }
 
 const ctx = elements.canvas.getContext('2d')
@@ -58,8 +63,10 @@ const clearSlices = () => {
   elements.sliceInfo.textContent = ''
 }
 
-const drawOverlay = () => {
-  if (!state.image) return
+// Calculate grid line positions
+const calculateGridLines = () => {
+  if (!state.image) return { vLines: [], hLines: [] }
+  
   const rows = readNumber(elements.rows, 1, 200, 1)
   const cols = readNumber(elements.cols, 1, 200, 1)
   const marginTop = readNumber(elements.marginTop, 0)
@@ -68,7 +75,49 @@ const drawOverlay = () => {
   const marginRight = readNumber(elements.marginRight, 0)
   const gapX = readNumber(elements.gapX, 0)
   const gapY = readNumber(elements.gapY, 0)
+  const { width, height } = state.image
+  
+  const usableWidth = width - marginLeft - marginRight - gapX * (cols - 1)
+  const usableHeight = height - marginTop - marginBottom - gapY * (rows - 1)
+  
+  if (usableWidth <= 0 || usableHeight <= 0) {
+    return { vLines: [], hLines: [], cellW: 0, cellH: 0 }
+  }
+  
+  const cellW = usableWidth / cols
+  const cellH = usableHeight / rows
+  
+  // Initialize custom lines if needed
+  if (state.customVLines.length !== cols - 1) {
+    state.customVLines = []
+    let x = marginLeft + cellW
+    for (let c = 1; c < cols; c++) {
+      state.customVLines.push(x)
+      x += cellW + gapX
+    }
+  }
+  
+  if (state.customHLines.length !== rows - 1) {
+    state.customHLines = []
+    let y = marginTop + cellH
+    for (let r = 1; r < rows; r++) {
+      state.customHLines.push(y)
+      y += cellH + gapY
+    }
+  }
+  
+  // Vertical lines (including borders)
+  const vLines = [marginLeft, ...state.customVLines, width - marginRight]
+  
+  // Horizontal lines (including borders)
+  const hLines = [marginTop, ...state.customHLines, height - marginBottom]
+  
+  return { vLines, hLines, cellW, cellH, marginTop, marginLeft, marginRight, marginBottom, usableWidth, usableHeight }
+}
 
+const drawOverlay = () => {
+  if (!state.image) return
+  
   const { width, height } = state.image
   elements.canvas.width = width
   elements.canvas.height = height
@@ -76,45 +125,207 @@ const drawOverlay = () => {
   ctx.clearRect(0, 0, width, height)
   ctx.drawImage(state.image, 0, 0, width, height)
 
-  const usableWidth = width - marginLeft - marginRight - gapX * (cols - 1)
-  const usableHeight = height - marginTop - marginBottom - gapY * (rows - 1)
-  if (usableWidth <= 0 || usableHeight <= 0) {
+  const { vLines, hLines, usableWidth, usableHeight, marginTop, marginLeft } = calculateGridLines()
+  
+  if (vLines.length === 0 || hLines.length === 0) {
     elements.sliceInfo.textContent = '参数过大，超出图片尺寸'
     return
   }
-  const cellW = usableWidth / cols
-  const cellH = usableHeight / rows
 
   ctx.save()
   ctx.strokeStyle = '#ef4444'
   ctx.lineWidth = 2
 
-  // outer border
-  ctx.strokeRect(marginLeft, marginTop, usableWidth + gapX * (cols - 1), usableHeight + gapY * (rows - 1))
-
-  // vertical grid lines
-  let x = marginLeft
-  for (let c = 0; c <= cols; c++) {
+  // Draw vertical lines
+  vLines.forEach((x, index) => {
+    // Highlight draggable internal lines
+    if (index > 0 && index < vLines.length - 1) {
+      ctx.strokeStyle = '#ef4444'
+      ctx.lineWidth = 2
+    } else {
+      ctx.strokeStyle = '#ef4444'
+      ctx.lineWidth = 3
+    }
+    
     ctx.beginPath()
     ctx.moveTo(x, marginTop)
-    ctx.lineTo(x, marginTop + usableHeight + gapY * (rows - 1))
+    ctx.lineTo(x, marginTop + usableHeight)
     ctx.stroke()
-    x += cellW
-    if (c < cols) x += gapX
-  }
+  })
 
-  // horizontal grid lines
-  let y = marginTop
-  for (let r = 0; r <= rows; r++) {
+  // Draw horizontal lines
+  hLines.forEach((y, index) => {
+    // Highlight draggable internal lines
+    if (index > 0 && index < hLines.length - 1) {
+      ctx.strokeStyle = '#ef4444'
+      ctx.lineWidth = 2
+    } else {
+      ctx.strokeStyle = '#ef4444'
+      ctx.lineWidth = 3
+    }
+    
     ctx.beginPath()
     ctx.moveTo(marginLeft, y)
-    ctx.lineTo(marginLeft + usableWidth + gapX * (cols - 1), y)
+    ctx.lineTo(marginLeft + usableWidth, y)
     ctx.stroke()
-    y += cellH
-    if (r < rows) y += gapY
-  }
+  })
 
   ctx.restore()
+  
+  // Draw hint
+  if (!state.dragging) {
+    ctx.save()
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'
+    ctx.fillRect(10, 10, 240, 30)
+    ctx.fillStyle = '#fff'
+    ctx.font = '12px sans-serif'
+    ctx.fillText('💡 拖拽任意网格线可微调位置', 20, 30)
+    ctx.restore()
+  }
+}
+
+// Get mouse position relative to canvas
+const getMousePos = (e) => {
+  const rect = elements.canvas.getBoundingClientRect()
+  const scaleX = elements.canvas.width / rect.width
+  const scaleY = elements.canvas.height / rect.height
+  return {
+    x: (e.clientX - rect.left) * scaleX,
+    y: (e.clientY - rect.top) * scaleY
+  }
+}
+
+// Check if mouse is near a line
+const getNearestLine = (mouseX, mouseY, threshold = 10) => {
+  if (!state.image) return null
+  
+  const { vLines, hLines, marginTop, marginLeft, usableWidth, usableHeight } = calculateGridLines()
+  if (vLines.length === 0 || hLines.length === 0) return null
+  
+  const { width, height } = state.image
+  const marginBottom = readNumber(elements.marginBottom, 0)
+  const marginRight = readNumber(elements.marginRight, 0)
+  
+  // Check vertical lines (including internal ones)
+  for (let i = 0; i < vLines.length; i++) {
+    const x = vLines[i]
+    if (Math.abs(mouseX - x) < threshold && mouseY >= marginTop && mouseY <= marginTop + usableHeight) {
+      if (i === 0) {
+        return { type: 'margin-left', value: marginLeft, index: i }
+      } else if (i === vLines.length - 1) {
+        return { type: 'margin-right', value: marginRight, index: i }
+      } else {
+        return { type: 'vline', value: x, index: i - 1 } // index in customVLines array
+      }
+    }
+  }
+  
+  // Check horizontal lines (including internal ones)
+  for (let i = 0; i < hLines.length; i++) {
+    const y = hLines[i]
+    if (Math.abs(mouseY - y) < threshold && mouseX >= marginLeft && mouseX <= marginLeft + usableWidth) {
+      if (i === 0) {
+        return { type: 'margin-top', value: marginTop, index: i }
+      } else if (i === hLines.length - 1) {
+        return { type: 'margin-bottom', value: marginBottom, index: i }
+      } else {
+        return { type: 'hline', value: y, index: i - 1 } // index in customHLines array
+      }
+    }
+  }
+  
+  return null
+}
+
+// Canvas mouse events
+const setupCanvasInteraction = () => {
+  let hoveredLine = null
+  
+  elements.canvas.addEventListener('mousemove', (e) => {
+    if (!state.image) return
+    
+    const pos = getMousePos(e)
+    
+    if (state.dragging) {
+      const { vLines, hLines, marginTop, marginLeft } = calculateGridLines()
+      
+      if (state.dragging.type === 'margin-top') {
+        const newValue = Math.max(0, Math.min(state.image.height / 2, state.dragging.originalValue + (pos.y - state.dragStart.y)))
+        elements.marginTop.value = Math.round(newValue)
+      } else if (state.dragging.type === 'margin-bottom') {
+        const newValue = Math.max(0, Math.min(state.image.height / 2, state.dragging.originalValue - (pos.y - state.dragStart.y)))
+        elements.marginBottom.value = Math.round(newValue)
+      } else if (state.dragging.type === 'margin-left') {
+        const newValue = Math.max(0, Math.min(state.image.width / 2, state.dragging.originalValue + (pos.x - state.dragStart.x)))
+        elements.marginLeft.value = Math.round(newValue)
+      } else if (state.dragging.type === 'margin-right') {
+        const newValue = Math.max(0, Math.min(state.image.width / 2, state.dragging.originalValue - (pos.x - state.dragStart.x)))
+        elements.marginRight.value = Math.round(newValue)
+      } else if (state.dragging.type === 'vline') {
+        // Constrain between adjacent lines
+        const index = state.dragging.index
+        // vLines = [leftBorder, ...customVLines, rightBorder]
+        // So customVLines[index] is at vLines[index + 1]
+        const minX = vLines[index] + 10  // Previous line in vLines
+        const maxX = vLines[index + 2] - 10  // Next line in vLines
+        const newX = Math.max(minX, Math.min(maxX, pos.x))
+        state.customVLines[index] = newX
+        console.log(`Dragging vline ${index}: ${newX} (between ${minX} and ${maxX})`)
+      } else if (state.dragging.type === 'hline') {
+        // Constrain between adjacent lines
+        const index = state.dragging.index
+        // hLines = [topBorder, ...customHLines, bottomBorder]
+        // So customHLines[index] is at hLines[index + 1]
+        const minY = hLines[index] + 10  // Previous line in hLines
+        const maxY = hLines[index + 2] - 10  // Next line in hLines
+        const newY = Math.max(minY, Math.min(maxY, pos.y))
+        state.customHLines[index] = newY
+        console.log(`Dragging hline ${index}: ${newY} (between ${minY} and ${maxY})`)
+      }
+      
+      drawOverlay()
+      elements.canvas.style.cursor = 'grabbing'
+    } else {
+      // Check if hovering over a line
+      hoveredLine = getNearestLine(pos.x, pos.y)
+      
+      if (hoveredLine) {
+        const isVertical = hoveredLine.type === 'margin-left' || hoveredLine.type === 'margin-right' || hoveredLine.type === 'vline'
+        elements.canvas.style.cursor = isVertical ? 'ew-resize' : 'ns-resize'
+      } else {
+        elements.canvas.style.cursor = 'default'
+      }
+    }
+  })
+  
+  elements.canvas.addEventListener('mousedown', (e) => {
+    if (!state.image) return
+    
+    const pos = getMousePos(e)
+    const line = getNearestLine(pos.x, pos.y)
+    
+    if (line) {
+      state.dragging = {
+        type: line.type,
+        originalValue: line.value,
+        index: line.index  // Important: save the index!
+      }
+      state.dragStart = pos
+      e.preventDefault()
+      console.log('Started dragging:', state.dragging)
+    }
+  })
+  
+  elements.canvas.addEventListener('mouseup', () => {
+    state.dragging = null
+    state.dragStart = null
+  })
+  
+  elements.canvas.addEventListener('mouseleave', () => {
+    state.dragging = null
+    state.dragStart = null
+    elements.canvas.style.cursor = 'default'
+  })
 }
 
 const loadImage = (file) => {
@@ -204,24 +415,37 @@ const sliceImage = async () => {
     elements.sliceInfo.textContent = '请先上传图片'
     return
   }
+  
   const format = elements.format.value
-  let cells
-  try {
-    cells = computeCells()
-  } catch (err) {
-    elements.sliceInfo.textContent = err.message
+  const { vLines, hLines } = calculateGridLines()
+  
+  if (vLines.length < 2 || hLines.length < 2) {
+    elements.sliceInfo.textContent = '网格配置无效'
     return
   }
-  const { rows, cols, cellW, cellH, marginTop, marginLeft, gapX, gapY, padX, padY } = cells
+  
+  const rows = hLines.length - 1
+  const cols = vLines.length - 1
+  const padX = readNumber(elements.padX, 0)
+  const padY = readNumber(elements.padY, 0)
+  
   const slices = []
   let index = 1
 
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
-      const sx = marginLeft + c * (cellW + gapX) + padX
-      const sy = marginTop + r * (cellH + gapY) + padY
-      const sWidth = cellW - padX * 2
-      const sHeight = cellH - padY * 2
+      const x1 = vLines[c]
+      const x2 = vLines[c + 1]
+      const y1 = hLines[r]
+      const y2 = hLines[r + 1]
+      
+      const sx = x1 + padX
+      const sy = y1 + padY
+      const sWidth = (x2 - x1) - padX * 2
+      const sHeight = (y2 - y1) - padY * 2
+      
+      if (sWidth <= 0 || sHeight <= 0) continue
+      
       const blob = await createSlice(
         {
           sx,
@@ -541,8 +765,16 @@ const sendToClipboard = () => {
   }
 }
 
+const resetGrid = () => {
+  state.customVLines = []
+  state.customHLines = []
+  drawOverlay()
+  elements.sliceInfo.textContent = '网格已重置为等比例'
+}
+
 const setupActions = () => {
   elements.sliceBtn.addEventListener('click', sliceImage)
+  elements.resetGrid.addEventListener('click', resetGrid)
   elements.downloadAll.addEventListener('click', downloadAll)
   elements.sendToClipboard.addEventListener('click', sendToClipboard)
   elements.generateGifBtn.addEventListener('click', generateGif)
@@ -553,6 +785,7 @@ const init = () => {
   setupUpload()
   setupControls()
   setupActions()
+  setupCanvasInteraction()
 }
 
 init()

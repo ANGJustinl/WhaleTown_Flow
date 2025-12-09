@@ -139,6 +139,8 @@ h1 {
 
 #preview-canvas {
   max-width: 100%;
+  user-select: none;
+  touch-action: none;
 }
 
 .tip {
