@@ -216,7 +216,21 @@ const convertToIco = async () => {
             canvas.height = size
             
             const ctx = canvas.getContext('2d')
-            ctx.drawImage(img, 0, 0, size, size)
+            
+            // Calculate scaling to fit image in square (contain mode)
+            const scale = Math.min(size / img.width, size / img.height)
+            const scaledWidth = img.width * scale
+            const scaledHeight = img.height * scale
+            
+            // Center the image
+            const x = (size - scaledWidth) / 2
+            const y = (size - scaledHeight) / 2
+            
+            // Fill with transparent background
+            ctx.clearRect(0, 0, size, size)
+            
+            // Draw image centered and scaled
+            ctx.drawImage(img, x, y, scaledWidth, scaledHeight)
             
             canvas.toBlob((blob) => {
               if (blob) {
