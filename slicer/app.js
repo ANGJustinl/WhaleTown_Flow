@@ -20,13 +20,24 @@ const elements = {
   sliceInfo: document.querySelector('#slice-info'),
   results: document.querySelector('#results'),
   resultGrid: document.querySelector('#result-grid'),
-  downloadAll: document.querySelector('#download-all')
+  downloadAll: document.querySelector('#download-all'),
+  gifSection: document.querySelector('#gif-section'),
+  gifDelay: document.querySelector('#gif-delay'),
+  gifOrder: document.querySelector('#gif-order'),
+  gifRepeat: document.querySelector('#gif-repeat'),
+  generateGifBtn: document.querySelector('#generate-gif-btn'),
+  downloadGifBtn: document.querySelector('#download-gif-btn'),
+  gifPreviewContainer: document.querySelector('#gif-preview-container'),
+  gifPreview: document.querySelector('#gif-preview'),
+  gifInfo: document.querySelector('#gif-info')
 }
 
 const state = {
   image: null,
   imageURL: null,
-  slices: []
+  slices: [],
+  gifBlob: null,
+  gifURL: null
 }
 
 const ctx = elements.canvas.getContext('2d')
@@ -235,6 +246,7 @@ const sliceImage = async () => {
 const renderResults = () => {
   if (!state.slices.length) return
   elements.results.hidden = false
+  elements.gifSection.hidden = false
   const frag = document.createDocumentFragment()
   state.slices.forEach((slice) => {
     const card = document.createElement('div')
@@ -332,9 +344,124 @@ const setupControls = () => {
   inputs.forEach((input) => input.addEventListener('input', drawOverlay))
 }
 
+const generateGif = async () => {
+  if (!state.slices.length) {
+    elements.gifInfo.textContent = '请先切割图片'
+    elements.gifPreviewContainer.hidden = false
+    return
+  }
+
+  elements.generateGifBtn.disabled = true
+  elements.generateGifBtn.textContent = '生成中...'
+  elements.gifPreviewContainer.hidden = false
+  elements.gifInfo.textContent = '正在准备帧数据...'
+  elements.downloadGifBtn.disabled = true
+
+  try {
+    const delay = readNumber(elements.gifDelay, 10, 5000, 100)
+    const order = elements.gifOrder.value
+
+    // Prepare frame order
+    let frames = [...state.slices]
+    if (order === 'reverse') {
+      frames = frames.reverse()
+    } else if (order === 'pingpong') {
+      frames = [...frames, ...frames.slice(0, -1).reverse()]
+    }
+
+    console.log('准备生成 GIF，帧数:', frames.length)
+
+    // Check if gifshot is loaded
+    if (typeof gifshot === 'undefined') {
+      throw new Error('GIF 库未加载，请刷新页面重试')
+    }
+
+    elements.gifInfo.textContent = `正在生成 GIF (${frames.length} 帧)...`
+
+    // Load all images first
+    const imageElements = await Promise.all(
+      frames.map((frame) => {
+        return new Promise((resolve, reject) => {
+          const img = new Image()
+          img.onload = () => resolve(img)
+          img.onerror = () => reject(new Error('图片加载失败'))
+          img.src = frame.url
+        })
+      })
+    )
+
+    console.log('图片加载完成，开始生成 GIF')
+
+    // Convert delay from ms to seconds (gifshot uses seconds)
+    const interval = delay / 1000
+
+    // Create GIF using gifshot with loaded images
+    const result = await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('生成超时，请减少帧数或降低图片尺寸'))
+      }, 30000) // 30 second timeout
+
+      gifshot.createGIF(
+        {
+          images: imageElements,
+          interval: interval,
+          sampleInterval: 10,
+          numWorkers: 2
+        },
+        (obj) => {
+          clearTimeout(timeout)
+          if (obj.error) {
+            reject(new Error(obj.error))
+          } else {
+            resolve(obj)
+          }
+        }
+      )
+    })
+
+    console.log('GIF 生成完成')
+
+    // Convert base64 to blob
+    const base64Data = result.image.split(',')[1]
+    const binaryData = atob(base64Data)
+    const bytes = new Uint8Array(binaryData.length)
+    for (let i = 0; i < binaryData.length; i++) {
+      bytes[i] = binaryData.charCodeAt(i)
+    }
+    const blob = new Blob([bytes], { type: 'image/gif' })
+
+    // Clean up old GIF
+    if (state.gifURL) {
+      URL.revokeObjectURL(state.gifURL)
+    }
+
+    state.gifBlob = blob
+    state.gifURL = URL.createObjectURL(blob)
+
+    elements.gifPreview.src = state.gifURL
+    elements.downloadGifBtn.disabled = false
+
+    const sizeKB = (blob.size / 1024).toFixed(1)
+    elements.gifInfo.textContent = `✓ GIF 生成成功！大小: ${sizeKB} KB，帧数: ${frames.length}`
+  } catch (error) {
+    console.error('GIF 生成失败:', error)
+    elements.gifInfo.textContent = `✗ 生成失败: ${error.message}`
+  } finally {
+    elements.generateGifBtn.disabled = false
+    elements.generateGifBtn.textContent = '生成 GIF 预览'
+  }
+}
+
+const downloadGif = () => {
+  if (!state.gifBlob) return
+  downloadBlob(state.gifBlob, 'animation.gif')
+}
+
 const setupActions = () => {
   elements.sliceBtn.addEventListener('click', sliceImage)
   elements.downloadAll.addEventListener('click', downloadAll)
+  elements.generateGifBtn.addEventListener('click', generateGif)
+  elements.downloadGifBtn.addEventListener('click', downloadGif)
 }
 
 const init = () => {

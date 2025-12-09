@@ -104,6 +104,45 @@
         <p id="slice-info"></p>
       </section>
 
+      <section class="gif-section" id="gif-section" hidden>
+        <div class="card">
+          <div class="card-header">
+            <strong>🎬 GIF 动画生成</strong>
+          </div>
+          <div class="card-body">
+            <div class="gif-controls">
+              <div class="control">
+                <label for="gif-delay">帧延迟 (ms)</label>
+                <input id="gif-delay" type="number" min="10" max="5000" value="100" step="10" />
+                <small>每帧显示时长，越小越快</small>
+              </div>
+              <div class="control">
+                <label for="gif-order">播放顺序</label>
+                <select id="gif-order">
+                  <option value="normal">正序 (1→N)</option>
+                  <option value="reverse">倒序 (N→1)</option>
+                  <option value="pingpong">往返 (1→N→1)</option>
+                </select>
+              </div>
+              <div class="control">
+                <label>
+                  <input type="checkbox" id="gif-repeat" checked />
+                  循环播放
+                </label>
+              </div>
+            </div>
+            <div class="gif-actions">
+              <button id="generate-gif-btn" class="primary">生成 GIF 预览</button>
+              <button id="download-gif-btn" class="secondary" disabled>下载 GIF</button>
+            </div>
+            <div class="gif-preview" id="gif-preview-container" hidden>
+              <img id="gif-preview" alt="GIF 预览" />
+              <p id="gif-info"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="results" id="results" hidden>
         <div class="card">
           <div class="card-header results-header">
@@ -119,6 +158,7 @@
       </section>
     </main>
 
+    <script src="https://unpkg.com/gifshot@0.4.5/dist/gifshot.min.js"></script>
     <script type="module" src="./zip.js"></script>
     <script type="module" src="./app.js"></script>
   </body>

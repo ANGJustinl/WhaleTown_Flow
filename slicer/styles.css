@@ -280,3 +280,52 @@ h1 {
   color: #1f120c;
   cursor: pointer;
 }
+
+.gif-section {
+  margin-top: 18px;
+}
+
+.gif-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.gif-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.gif-preview {
+  margin-top: 16px;
+  padding: 16px;
+  background: repeating-linear-gradient(
+      45deg,
+      #fff7e6,
+      #fff7e6 10px,
+      #f4e2c9 10px,
+      #f4e2c9 20px
+    )
+    #fff7e6;
+  border-radius: 10px;
+  border: 1px solid #d8bfa3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.gif-preview img {
+  max-width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(97, 63, 36, 0.12);
+}
+
+#gif-info {
+  margin: 0;
+  color: #7a5a45;
+  font-size: 14px;
+}
