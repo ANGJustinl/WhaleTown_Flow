@@ -16,6 +16,8 @@ const elements = {
   resultInfo: document.querySelector('#result-info'),
   resultSize: document.querySelector('#result-size'),
   downloadBtn: document.querySelector('#download-btn'),
+  sendToClipboard: document.querySelector('#send-to-clipboard'),
+  importClipboard: document.querySelector('#import-clipboard'),
   icoResults: document.querySelector('#ico-results')
 }
 
@@ -56,6 +58,7 @@ const clearResult = () => {
   elements.resultPlaceholder.hidden = false
   elements.resultInfo.hidden = true
   elements.downloadBtn.disabled = true
+  elements.sendToClipboard.disabled = true
   
   if (convertedUrl) {
     URL.revokeObjectURL(convertedUrl)
@@ -177,6 +180,7 @@ const convertToFormat = async (format) => {
           }`
           
           elements.downloadBtn.disabled = false
+          elements.sendToClipboard.disabled = false
           setStatus('转换完成')
           resolve()
         }, mimeType, quality)
@@ -273,6 +277,7 @@ const convertToIco = async () => {
         elements.resultSize.textContent = `共 ${sizes.length} 个尺寸，总大小 ${formatBytes(totalSize)}`
         
         elements.downloadBtn.disabled = false
+        elements.sendToClipboard.disabled = false
         elements.downloadBtn.textContent = '打包下载'
         setStatus(`转换完成，生成 ${sizes.length} 个尺寸`)
         resolve()
@@ -352,8 +357,65 @@ const downloadIcoAsZip = async () => {
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
+const importFromClipboard = async () => {
+  if (typeof window.parent.clipboardGetAll !== 'function') {
+    setStatus('剪贴板功能不可用')
+    return
+  }
+  
+  const clipboardItems = window.parent.clipboardGetAll()
+  
+  if (!clipboardItems || clipboardItems.length === 0) {
+    setStatus('剪贴板为空')
+    return
+  }
+  
+  // Use the first item
+  const item = clipboardItems[0]
+  if (!item || !item.url) {
+    setStatus('剪贴板项目无效')
+    return
+  }
+  
+  setStatus(`正在导入: ${item.name}`)
+  
+  try {
+    const response = await fetch(item.url)
+    const blob = await response.blob()
+    const file = new File([blob], item.name, { type: item.type })
+    handleFiles([file])
+  } catch (error) {
+    console.error('导入失败:', error)
+    setStatus(`导入失败: ${error.message}`)
+  }
+}
+
+// Listen for clipboard paste messages
+window.addEventListener('message', async (event) => {
+  if (event.data.type === 'clipboard-paste' && event.data.item) {
+    const item = event.data.item
+    if (!item || !item.url) {
+      setStatus('剪贴板项目无效')
+      return
+    }
+    
+    setStatus(`正在导入: ${item.name}`)
+    
+    try {
+      const response = await fetch(item.url)
+      const blob = await response.blob()
+      const file = new File([blob], item.name, { type: item.type })
+      handleFiles([file])
+    } catch (error) {
+      console.error('导入失败:', error)
+      setStatus(`导入失败: ${error.message}`)
+    }
+  }
+})
+
 const wireEvents = () => {
   elements.fileInput.addEventListener('change', (e) => handleFiles(e.target.files))
+  elements.importClipboard.addEventListener('click', importFromClipboard)
   
   elements.dropZone.addEventListener('dragover', (e) => {
     e.preventDefault()
@@ -380,6 +442,52 @@ const wireEvents = () => {
   
   elements.convertBtn.addEventListener('click', convertImage)
   elements.downloadBtn.addEventListener('click', downloadResult)
+  
+  elements.sendToClipboard.addEventListener('click', () => {
+    const format = getSelectedFormat()
+    
+    if (format === 'ico' && icoBlobs.length > 0) {
+      // Send all ICO sizes
+      if (typeof window.parent.clipboardAddMultiple === 'function') {
+        const items = icoBlobs.map((item) => ({
+          name: `favicon-${item.size}x${item.size}.png`,
+          url: item.url,
+          blob: item.blob,
+          type: 'image/png',
+          source: '格式转换',
+          metadata: {
+            format: 'ico',
+            size: item.size
+          }
+        }))
+        
+        window.parent.clipboardAddMultiple(items)
+        setStatus(`✓ 已发送 ${items.length} 个 ICO 尺寸到剪贴板`)
+      }
+    } else if (convertedBlob && convertedUrl) {
+      // Send single converted image
+      if (typeof window.parent.clipboardAdd === 'function') {
+        const ext = format === 'jpeg' ? 'jpg' : format
+        const name = currentFile ? currentFile.name.replace(/\.[^.]+$/, '') + `.${ext}` : `converted.${ext}`
+        
+        window.parent.clipboardAdd({
+          name: name,
+          url: convertedUrl,
+          blob: convertedBlob,
+          type: convertedBlob.type,
+          source: '格式转换',
+          metadata: {
+            format: format,
+            original: currentFile?.name
+          }
+        })
+        
+        setStatus('✓ 已发送到剪贴板')
+      }
+    } else {
+      setStatus('没有可发送的结果')
+    }
+  })
 }
 
 const bootstrap = () => {

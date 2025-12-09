@@ -34,6 +34,22 @@
       </a>
     </footer>
 
+    <!-- 全局剪贴板 -->
+    <div id="clipboard-panel" class="clipboard-panel">
+      <div class="clipboard-header">
+        <strong>📋 剪贴板 (<span id="clipboard-count">0</span>)</strong>
+        <div class="clipboard-actions">
+          <button id="clipboard-clear" class="clipboard-btn" title="清空">🗑️</button>
+          <button id="clipboard-toggle" class="clipboard-btn" title="收起/展开">▼</button>
+        </div>
+      </div>
+      <div id="clipboard-content" class="clipboard-content">
+        <div id="clipboard-items" class="clipboard-items"></div>
+        <p class="clipboard-empty">剪贴板为空</p>
+      </div>
+    </div>
+
+    <script src="./clipboard.js"></script>
     <script type="module" src="./app.js"></script>
   </body>
 </html>

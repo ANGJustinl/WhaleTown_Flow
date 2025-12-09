@@ -82,6 +82,20 @@ h1 {
   cursor: pointer;
 }
 
+.upload-btn-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #f0d2aa;
+  color: #3c2a20;
+  border: 1px dashed #c69c6c;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+}
+
 .hint {
   margin: 8px 0 4px;
   color: #3c2a20;

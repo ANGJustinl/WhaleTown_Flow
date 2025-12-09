@@ -6,10 +6,13 @@ const elements = {
   previewPlaceholder: document.querySelector('#preview-placeholder'),
   svgOutput: document.querySelector('#svg-output'),
   svgPlaceholder: document.querySelector('#svg-placeholder'),
-  downloadBtn: document.querySelector('#download-btn')
+  downloadBtn: document.querySelector('#download-btn'),
+  sendToClipboard: document.querySelector('#send-to-clipboard')
 }
 
 let lastSVGBlobUrl = null
+let lastSVGBlob = null
+let currentFileName = null
 
 const setStatus = (text) => {
   elements.status.textContent = text
@@ -19,10 +22,12 @@ const clearSVG = () => {
   elements.svgOutput.innerHTML = ''
   elements.svgPlaceholder.hidden = false
   elements.downloadBtn.disabled = true
+  elements.sendToClipboard.disabled = true
   if (lastSVGBlobUrl) {
     URL.revokeObjectURL(lastSVGBlobUrl)
     lastSVGBlobUrl = null
   }
+  lastSVGBlob = null
 }
 
 const showPreview = (src) => {
@@ -52,14 +57,16 @@ const handleSVGResult = (svgString) => {
   }
 
   // Prepare downloadable blob
-  const blob = new Blob([svgString], { type: 'image/svg+xml' })
-  lastSVGBlobUrl = URL.createObjectURL(blob)
+  lastSVGBlob = new Blob([svgString], { type: 'image/svg+xml' })
+  lastSVGBlobUrl = URL.createObjectURL(lastSVGBlob)
   elements.downloadBtn.disabled = false
+  elements.sendToClipboard.disabled = false
 }
 
 const vectorize = (file) => {
   if (!file) return
 
+  currentFileName = file.name
   setStatus('正在矢量化...')
   clearSVG()
 
@@ -121,6 +128,32 @@ const wireEvents = () => {
     a.href = lastSVGBlobUrl
     a.download = 'vectorized.svg'
     a.click()
+  })
+  
+  elements.sendToClipboard.addEventListener('click', () => {
+    if (!lastSVGBlob || !lastSVGBlobUrl) {
+      setStatus('没有可发送的结果')
+      return
+    }
+    
+    if (typeof window.parent.clipboardAdd === 'function') {
+      const name = currentFileName ? currentFileName.replace(/\.[^.]+$/, '') + '.svg' : 'vectorized.svg'
+      
+      window.parent.clipboardAdd({
+        name: name,
+        url: lastSVGBlobUrl,
+        blob: lastSVGBlob,
+        type: 'image/svg+xml',
+        source: '图片矢量化',
+        metadata: {
+          original: currentFileName
+        }
+      })
+      
+      setStatus('✓ 已发送到剪贴板')
+    } else {
+      setStatus('剪贴板功能不可用')
+    }
   })
 }
 

@@ -111,8 +111,119 @@ const start = () => {
   bootstrap()
 }
 
+// 剪贴板面板管理
+const initClipboard = () => {
+  const panel = document.querySelector('#clipboard-panel')
+  const toggle = document.querySelector('#clipboard-toggle')
+  const clear = document.querySelector('#clipboard-clear')
+  const count = document.querySelector('#clipboard-count')
+  const items = document.querySelector('#clipboard-items')
+  const header = document.querySelector('.clipboard-header')
+
+  if (!panel || !window.globalClipboard) return
+
+  // 切换展开/收起
+  const togglePanel = () => {
+    panel.classList.toggle('collapsed')
+    toggle.textContent = panel.classList.contains('collapsed') ? '▲' : '▼'
+  }
+
+  header.addEventListener('click', (e) => {
+    if (e.target === header || e.target.tagName === 'STRONG' || e.target.id === 'clipboard-count') {
+      togglePanel()
+    }
+  })
+
+  toggle.addEventListener('click', (e) => {
+    e.stopPropagation()
+    togglePanel()
+  })
+
+  // 清空剪贴板
+  clear.addEventListener('click', (e) => {
+    e.stopPropagation()
+    if (confirm('确定要清空剪贴板吗？')) {
+      window.clipboardClear()
+    }
+  })
+
+  // 渲染剪贴板项目
+  const renderItems = (clipboardItems) => {
+    count.textContent = clipboardItems.length
+    items.innerHTML = ''
+
+    clipboardItems.forEach((item) => {
+      const div = document.createElement('div')
+      div.className = 'clipboard-item'
+      div.title = '点击查看详情'
+
+      const thumb = document.createElement('img')
+      thumb.className = 'clipboard-item-thumb'
+      thumb.src = item.url
+      thumb.alt = item.name
+
+      const info = document.createElement('div')
+      info.className = 'clipboard-item-info'
+
+      const name = document.createElement('div')
+      name.className = 'clipboard-item-name'
+      name.textContent = item.name
+
+      const meta = document.createElement('div')
+      meta.className = 'clipboard-item-meta'
+      const time = new Date(item.timestamp).toLocaleTimeString('zh-CN', {
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+      meta.textContent = `${item.source} · ${time}`
+
+      info.appendChild(name)
+      info.appendChild(meta)
+
+      const removeBtn = document.createElement('button')
+      removeBtn.className = 'clipboard-item-remove'
+      removeBtn.textContent = '×'
+      removeBtn.title = '删除'
+      removeBtn.onclick = (e) => {
+        e.stopPropagation()
+        window.clipboardRemove(item.id)
+      }
+
+      div.appendChild(thumb)
+      div.appendChild(info)
+      div.appendChild(removeBtn)
+
+      // 点击项目时发送消息到当前激活的 iframe
+      div.addEventListener('click', () => {
+        const activeFrame = document.querySelector('.flow-frame.active')
+        if (activeFrame && activeFrame.contentWindow) {
+          activeFrame.contentWindow.postMessage(
+            {
+              type: 'clipboard-paste',
+              item: item
+            },
+            '*'
+          )
+        }
+      })
+
+      items.appendChild(div)
+    })
+  }
+
+  // 监听剪贴板变化
+  window.clipboardOnChange(renderItems)
+
+  // 初始渲染
+  renderItems(window.clipboardGetAll())
+}
+
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', start)
+  document.addEventListener('DOMContentLoaded', () => {
+    start()
+    initClipboard()
+  })
 } else {
   start()
+  initClipboard()
 }

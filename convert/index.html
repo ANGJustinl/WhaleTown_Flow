@@ -22,6 +22,7 @@
             <input id="file-input" type="file" accept="image/*" />
             <span>选择图片</span>
           </label>
+          <button id="import-clipboard" class="upload-btn-action">📋 从剪贴板导入</button>
           <p class="hint">或将图片拖拽到此处</p>
           <p class="status" id="status">未选择文件</p>
         </div>
@@ -95,7 +96,10 @@
         <div class="card">
           <div class="card-header">
             <strong>转换结果</strong>
-            <button id="download-btn" class="secondary" disabled>下载文件</button>
+            <div class="card-actions">
+              <button id="send-to-clipboard" class="secondary" disabled>📋 发送到剪贴板</button>
+              <button id="download-btn" class="secondary" disabled>下载文件</button>
+            </div>
           </div>
           <div class="card-body preview-body">
             <img id="result-preview" alt="转换结果预览" hidden />

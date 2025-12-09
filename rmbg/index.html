@@ -39,13 +39,16 @@
         <div class="card">
           <div class="card-header">
             <strong>去背结果</strong>
-            <a
-              id="download-link"
-              class="link hidden"
-              href="#"
-              download="rmbg.png"
-              >下载</a
-            >
+            <div class="card-actions">
+              <button id="send-to-clipboard" class="link hidden">📋 发送到剪贴板</button>
+              <a
+                id="download-link"
+                class="link hidden"
+                href="#"
+                download="rmbg.png"
+                >下载</a
+              >
+            </div>
           </div>
           <div class="card-body">
             <img id="preview-output" alt="去背预览" />

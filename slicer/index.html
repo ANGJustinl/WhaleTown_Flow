@@ -21,6 +21,7 @@
             <input id="file-input" type="file" accept="image/*" />
             <span>上传图片</span>
           </label>
+          <button id="import-clipboard" class="upload-btn-action">📋 从剪贴板导入</button>
           <p class="hint">或将图片拖拽到此处</p>
           <p class="status" id="upload-status">未选择文件</p>
         </div>
@@ -148,6 +149,7 @@
           <div class="card-header results-header">
             <strong>切割结果</strong>
             <div class="result-actions">
+              <button id="send-to-clipboard" class="secondary">📋 发送到剪贴板</button>
               <button id="download-all" class="secondary">批量下载 ZIP</button>
             </div>
           </div>

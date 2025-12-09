@@ -2,6 +2,7 @@ import { zipFiles } from './zip.js'
 
 const elements = {
   file: document.querySelector('#file-input'),
+  importClipboard: document.querySelector('#import-clipboard'),
   uploader: document.querySelector('#uploader'),
   uploadStatus: document.querySelector('#upload-status'),
   canvas: document.querySelector('#preview-canvas'),
@@ -21,6 +22,7 @@ const elements = {
   results: document.querySelector('#results'),
   resultGrid: document.querySelector('#result-grid'),
   downloadAll: document.querySelector('#download-all'),
+  sendToClipboard: document.querySelector('#send-to-clipboard'),
   gifSection: document.querySelector('#gif-section'),
   gifDelay: document.querySelector('#gif-delay'),
   gifOrder: document.querySelector('#gif-order'),
@@ -297,11 +299,69 @@ const downloadAll = async () => {
   }
 }
 
+const importFromClipboard = async () => {
+  if (typeof window.parent.clipboardGetAll !== 'function') {
+    elements.uploadStatus.textContent = '剪贴板功能不可用'
+    return
+  }
+  
+  const clipboardItems = window.parent.clipboardGetAll()
+  
+  if (!clipboardItems || clipboardItems.length === 0) {
+    elements.uploadStatus.textContent = '剪贴板为空'
+    return
+  }
+  
+  // Use the first item
+  const item = clipboardItems[0]
+  if (!item || !item.url) {
+    elements.uploadStatus.textContent = '剪贴板项目无效'
+    return
+  }
+  
+  elements.uploadStatus.textContent = `正在导入: ${item.name}`
+  
+  try {
+    const response = await fetch(item.url)
+    const blob = await response.blob()
+    const file = new File([blob], item.name, { type: item.type })
+    await handleFile(file)
+  } catch (error) {
+    console.error('导入失败:', error)
+    elements.uploadStatus.textContent = `导入失败: ${error.message}`
+  }
+}
+
+// Listen for clipboard paste messages
+window.addEventListener('message', async (event) => {
+  if (event.data.type === 'clipboard-paste' && event.data.item) {
+    const item = event.data.item
+    if (!item || !item.url) {
+      elements.uploadStatus.textContent = '剪贴板项目无效'
+      return
+    }
+    
+    elements.uploadStatus.textContent = `正在导入: ${item.name}`
+    
+    try {
+      const response = await fetch(item.url)
+      const blob = await response.blob()
+      const file = new File([blob], item.name, { type: item.type })
+      await handleFile(file)
+    } catch (error) {
+      console.error('导入失败:', error)
+      elements.uploadStatus.textContent = `导入失败: ${error.message}`
+    }
+  }
+})
+
 const setupUpload = () => {
   elements.file.addEventListener('change', (e) => {
     const file = e.target.files?.[0]
     handleFile(file)
   })
+  
+  elements.importClipboard.addEventListener('click', importFromClipboard)
 
   const preventDefaults = (e) => {
     e.preventDefault()
@@ -457,9 +517,34 @@ const downloadGif = () => {
   downloadBlob(state.gifBlob, 'animation.gif')
 }
 
+const sendToClipboard = () => {
+  if (!state.slices.length) return
+  
+  if (typeof window.parent.clipboardAddMultiple === 'function') {
+    const items = state.slices.map((slice) => ({
+      name: slice.name,
+      url: slice.url,
+      blob: slice.blob,
+      type: slice.blob.type,
+      source: '多图切割',
+      metadata: {
+        row: slice.row,
+        col: slice.col,
+        index: slice.index
+      }
+    }))
+    
+    window.parent.clipboardAddMultiple(items)
+    elements.sliceInfo.textContent = `✓ 已发送 ${items.length} 张图片到剪贴板`
+  } else {
+    elements.sliceInfo.textContent = '剪贴板功能不可用'
+  }
+}
+
 const setupActions = () => {
   elements.sliceBtn.addEventListener('click', sliceImage)
   elements.downloadAll.addEventListener('click', downloadAll)
+  elements.sendToClipboard.addEventListener('click', sendToClipboard)
   elements.generateGifBtn.addEventListener('click', generateGif)
   elements.downloadGifBtn.addEventListener('click', downloadGif)
 }

@@ -1,6 +1,7 @@
 const elements = {
   fileInput: document.querySelector('#file-input'),
   zipInput: document.querySelector('#zip-input'),
+  importClipboard: document.querySelector('#import-clipboard'),
   dropZone: document.querySelector('#drop-zone'),
   status: document.querySelector('#status'),
   framesSection: document.querySelector('#frames-section'),
@@ -377,9 +378,68 @@ const handleFiles = (files) => {
   addFrames(files)
 }
 
+const importFromClipboard = async () => {
+  if (typeof window.parent.clipboardGetAll !== 'function') {
+    setStatus('剪贴板功能不可用')
+    return
+  }
+  
+  const clipboardItems = window.parent.clipboardGetAll()
+  
+  if (!clipboardItems || clipboardItems.length === 0) {
+    setStatus('剪贴板为空')
+    return
+  }
+  
+  setStatus(`正在从剪贴板导入 ${clipboardItems.length} 张图片...`)
+  
+  try {
+    // Convert clipboard items to File objects
+    const files = await Promise.all(
+      clipboardItems.map(async (item) => {
+        if (!item || !item.url) {
+          throw new Error('无效的剪贴板项目')
+        }
+        const response = await fetch(item.url)
+        const blob = await response.blob()
+        return new File([blob], item.name, { type: item.type })
+      })
+    )
+    
+    await addFrames(files)
+  } catch (error) {
+    console.error('从剪贴板导入失败:', error)
+    setStatus(`导入失败: ${error.message}`)
+  }
+}
+
+// 监听来自父窗口的剪贴板粘贴消息
+window.addEventListener('message', async (event) => {
+  if (event.data.type === 'clipboard-paste' && event.data.item) {
+    const item = event.data.item
+    if (!item || !item.url) {
+      setStatus('剪贴板项目无效')
+      return
+    }
+    
+    setStatus(`正在导入: ${item.name}`)
+    
+    try {
+      const response = await fetch(item.url)
+      const blob = await response.blob()
+      const file = new File([blob], item.name, { type: item.type })
+      await addFrames([file])
+    } catch (error) {
+      console.error('导入失败:', error)
+      setStatus(`导入失败: ${error.message}`)
+    }
+  }
+})
+
 const wireEvents = () => {
   elements.fileInput.addEventListener('change', (e) => handleFiles(e.target.files))
   elements.zipInput.addEventListener('change', (e) => handleFiles(e.target.files))
+  elements.importClipboard.addEventListener('click', importFromClipboard)
   
   elements.dropZone.addEventListener('dragover', (e) => {
     e.preventDefault()
