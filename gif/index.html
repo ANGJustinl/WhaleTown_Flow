@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GIF 动画制作</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://unpkg.com/gifshot@0.4.5/dist/gifshot.min.js"></script>
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <div class="title">
+          <span class="emoji">🎬</span>
+          <div>
+            <h1>GIF 动画制作</h1>
+            <p>上传多张图片，快速生成 GIF 动画</p>
+          </div>
+        </div>
+        <div class="uploader" id="drop-zone">
+          <label class="upload-btn">
+            <input id="file-input" type="file" accept="image/*" multiple />
+            <span>选择图片（可多选）</span>
+          </label>
+          <label class="upload-btn">
+            <input id="zip-input" type="file" accept=".zip" />
+            <span>或选择 ZIP 文件</span>
+          </label>
+          <p class="hint">或将图片/ZIP 拖拽到此处</p>
+          <p class="status" id="status">未选择文件</p>
+        </div>
+      </header>
+
+      <section class="frames-section" id="frames-section" hidden>
+        <div class="card">
+          <div class="card-header">
+            <strong>帧序列 (拖拽调整顺序)</strong>
+            <button id="clear-frames" class="secondary">清空</button>
+          </div>
+          <div class="card-body">
+            <div class="frames-grid" id="frames-grid"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="controls-section" id="controls-section" hidden>
+        <div class="card">
+          <div class="card-header">
+            <strong>⚙️ GIF 设置</strong>
+          </div>
+          <div class="card-body">
+            <div class="controls-grid">
+              <div class="control">
+                <label for="gif-delay">帧延迟 (ms)</label>
+                <input id="gif-delay" type="number" min="10" max="5000" value="200" step="10" />
+                <small>每帧显示时长，越小越快</small>
+              </div>
+              
+              <div class="control">
+                <label for="gif-order">播放顺序</label>
+                <select id="gif-order">
+                  <option value="normal">正序 (1→N)</option>
+                  <option value="reverse">倒序 (N→1)</option>
+                  <option value="pingpong">往返 (1→N→1)</option>
+                </select>
+              </div>
+
+              <div class="control">
+                <label for="gif-quality">图片质量</label>
+                <select id="gif-quality">
+                  <option value="1">最高质量（慢）</option>
+                  <option value="5">高质量</option>
+                  <option value="10" selected>标准质量</option>
+                  <option value="20">低质量（快）</option>
+                </select>
+              </div>
+
+              <div class="control">
+                <label for="gif-width">输出宽度 (px)</label>
+                <input id="gif-width" type="number" min="50" max="2000" value="0" step="10" />
+                <small>留空则使用原始尺寸</small>
+              </div>
+            </div>
+
+            <div class="action-buttons">
+              <button id="generate-btn" class="primary">生成 GIF</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="result-section" id="result-section" hidden>
+        <div class="card">
+          <div class="card-header">
+            <strong>GIF 预览</strong>
+            <button id="download-btn" class="secondary" disabled>下载 GIF</button>
+          </div>
+          <div class="card-body preview-body">
+            <img id="gif-preview" alt="GIF 预览" hidden />
+            <p id="result-placeholder" class="placeholder">生成后显示预览</p>
+          </div>
+          <div class="card-footer" id="result-info" hidden>
+            <span id="result-size"></span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://unpkg.com/gifshot@0.4.5/dist/gifshot.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

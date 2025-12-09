@@ -22,6 +22,12 @@ const flows = [
     name: '格式转换',
     description: 'PNG/JPG/WebP/ICO 格式互转',
     url: './convert/' // 格式转换工具
+  },
+  {
+    id: 'gif',
+    name: 'GIF 制作',
+    description: '多图合成 GIF 动画，支持拖拽排序',
+    url: './gif/' // GIF 制作工具
   }
   // 可在此继续添加更多工作流，保持 id 唯一且 url 指向对应入口
 ]
