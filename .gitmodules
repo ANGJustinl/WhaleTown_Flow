@@ -1,0 +1,3 @@
+[submodule "whaleui"]
+	path = whaleui
+	url = git@github.com:ANGJustinl/whale_town_UI_demo.git

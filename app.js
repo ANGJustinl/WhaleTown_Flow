@@ -34,6 +34,12 @@ const flows = [
     name: 'Whale 设计器',
     description: 'Datawhale Town 角色创建器 · AI 像素风格',
     url: './whaledesign/dist/' // Whale 设计工具
+  },
+  {
+    id: 'whaleui',
+    name: 'Whale UI',
+    description: 'Web UI with Backend Communication · React 组件库',
+    url: './whaleui/build/' // Whale UI 工具
   }
   // 可在此继续添加更多工作流，保持 id 唯一且 url 指向对应入口
 ]
